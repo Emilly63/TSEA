@@ -1,0 +1,12 @@
+:root { --blue: #004a99; --light: #f8f9fa; }
+body { font-family: sans-serif; background: #e0e0e0; margin: 0; }
+.container { max-width: 800px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; text-align: center; }
+.logo { width: 150px; margin-bottom: 20px; }
+.scanner-box { border: 4px solid var(--blue); padding: 40px; border-radius: 15px; }
+.status { font-size: 1.8rem; font-weight: bold; margin: 20px 0; color: #555; }
+.active { color: #28a745; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+th { background: var(--blue); color: white; }
+button { padding: 10px 20px; cursor: pointer; background: var(--blue); color: white; border: none; border-radius: 5px; }
+.btn-cancel { background: #dc3545; margin-top: 10px; }
