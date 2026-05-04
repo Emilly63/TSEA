@@ -1,0 +1,85 @@
+-- 1. Criação do Banco de Dados
+CREATE DATABASE IF NOT EXISTS tsea_rastreabilidade;
+USE tsea_rastreabilidade;
+
+-- 2. Tabela de Usuários
+-- Inclui o campo 'tipo' para diferenciar administradores de operadores
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    senha VARCHAR(100),
+    codBarras VARCHAR(50) UNIQUE NOT NULL, -- Nome esperado pelo backend
+    setor VARCHAR(50),
+    turno VARCHAR(50),
+    tipo ENUM('operador', 'admin') DEFAULT 'operador' -- Define permissões
+);
+
+-- 3. Tabela de Ferramentas
+-- O status inclui 'manutencao' conforme a lógica do seu server.js
+CREATE TABLE IF NOT EXISTS ferramentas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    codigoBarras VARCHAR(50) UNIQUE NOT NULL, -- Utilizado nas rotas de admin
+    status ENUM('disponivel', 'em_uso', 'manutencao') DEFAULT 'disponivel',
+    setor VARCHAR(50),
+    localizacao VARCHAR(100)
+);
+
+-- 4. Tabela de Empréstimos
+-- Registra o histórico e o vínculo entre usuários e ferramentas
+CREATE TABLE IF NOT EXISTS emprestimos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuarioId INT,
+    ferramentaId INT,
+    dataRetirada DATETIME DEFAULT CURRENT_TIMESTAMP,
+    dataDevolucao DATETIME NULL, -- Nome esperado para finalização
+    status ENUM('ativo', 'concluido') DEFAULT 'ativo',
+    FOREIGN KEY (usuarioId) REFERENCES usuarios(id),
+    FOREIGN KEY (ferramentaId) REFERENCES ferramentas(id)
+);
+
+-- Inserindo Usuários (Um Admin e um Operador)
+INSERT INTO usuarios (nome, email, codBarras, setor, turno, tipo) VALUES 
+('Emilly Sabrina', 'emilly@tsea.com.br', '12345', 'TI', 'Manhã', 'admin'),
+('João Silva', 'joao.silva@tsea.com.br', '67890', 'Produção', 'Tarde', 'operador');
+
+-- Inserindo Ferramentas Iniciais
+INSERT INTO ferramentas (nome, codigoBarras, status, setor, localizacao) VALUES 
+('Multímetro Digital', 'F001', 'disponivel', 'Elétrica', 'Armário A1'),
+('Alicate de Corte', 'F002', 'disponivel', 'Mecânica', 'Caixa 05'),
+('Parafusadeira Bosch', 'F003', 'manutencao', 'Montagem', 'Bancada de Reparo');
+
+INSERT INTO ferramentas (nome, codigoBarras, status, setor, localizacao) VALUES 
+('Martelo', '7896447500363', 'disponivel', 'Mecânica', 'Caixa 05'); -- 7896447500363e
+
+
+-- Exemplo de um Empréstimo Ativo (O João retirou o Multímetro)
+-- Nota: Aqui usamos ID 2 para o João e ID 1 para a Ferramenta conforme a ordem acima
+INSERT INTO emprestimos (usuarioId, ferramentaId, status) VALUES 
+(2, 1, 'ativo');
+
+-- Como o item acima foi emprestado, precisamos atualizar o status dele na tabela de ferramentas
+UPDATE ferramentas SET status = 'em_uso' WHERE id = 1;
+
+-- Buscar usuário pelo código de barras
+SELECT id, nome, tipo FROM usuarios WHERE codBarras = '12345';
+
+SELECT 
+    f.nome AS ferramenta, 
+    f.status, 
+    u.nome AS usuario_com_a_posse
+FROM ferramentas f
+LEFT JOIN emprestimos e ON f.id = e.ferramentaId AND e.status = 'ativo'
+LEFT JOIN usuarios u ON e.usuarioId = u.id;
+
+SELECT 
+    u.nome AS Funcionario, 
+    f.nome AS Item, 
+    e.dataRetirada, 
+    e.dataDevolucao, 
+    e.status AS Situacao_Emprestimo
+FROM emprestimos e
+JOIN usuarios u ON e.usuarioId = u.id
+JOIN ferramentas f ON e.ferramentaId = f.id
+ORDER BY e.dataRetirada DESC;
